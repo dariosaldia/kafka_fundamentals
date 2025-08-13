@@ -1,0 +1,6 @@
+[workspace]
+members = [
+  "shared",
+  "labs/lab1_produce_consume"
+]
+resolver = "2"

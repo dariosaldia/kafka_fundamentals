@@ -1,0 +1,56 @@
+services:
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"   # PLAINTEXT (external clients)
+      - "29092:29092" # PLAINTEXT_INTERNAL (other Docker services)
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+
+      # Define all listeners:
+      #  - PLAINTEXT for external clients (port 9092)
+      #  - PLAINTEXT_INTERNAL for internal Docker-to-Docker traffic (port 29092)
+      #  - CONTROLLER for KRaft controller quorum (port 9093)
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_INTERNAL://:29092,CONTROLLER://:9093
+
+      # Advertise:
+      #  - PLAINTEXT at localhost:9092 (so host apps use localhost:9092)
+      #  - PLAINTEXT_INTERNAL at kafka:29092 (so other containers use kafka:29092)
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - kafka_data:/bitnami/kafka/data
+
+  kafka-init:
+    image: bitnami/kafka:latest
+    container_name: kafka_init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: |
+      /bin/sh -c '
+        # create our topic
+        /opt/bitnami/kafka/bin/kafka-topics.sh \
+          --bootstrap-server kafka:29092 \
+          --create --if-not-exists \
+          --topic demo.events \
+          --partitions 3 \
+          --replication-factor 1;
+      '
+
+volumes:
+  kafka_data:
