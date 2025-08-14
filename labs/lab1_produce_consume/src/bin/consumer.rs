@@ -5,7 +5,7 @@ use rdkafka::consumer::{Consumer, StreamConsumer};
 use rdkafka::message::Message;
 use serde::Deserialize;
 use shared::config::AppConfig;
-use shared::create_consumer;
+use shared::create_consumer_props;
 
 #[derive(Deserialize, Debug)]
 struct Event {
@@ -41,7 +41,14 @@ async fn main() -> Result<()> {
         .or(cfg.group_id.as_deref())
         .unwrap_or("demo-consumer-group");
 
-    let consumer: StreamConsumer = create_consumer(&cfg.bootstrap_servers, group_id, true)?;
+    let props = &[
+        ("bootstrap.servers", cfg.bootstrap_servers),
+        ("group.id", group_id.to_string()),
+        ("enable.auto.commit", "true".to_string()),
+        ("auto.offset.reset", "earliest".to_string()),
+    ];
+
+    let consumer: StreamConsumer = create_consumer_props(props)?;
     consumer.subscribe(&[&cfg.topic])?;
     eprintln!(
         "Consumer using config: {cfg_path} | group='{group_id}' | topic='{}'",

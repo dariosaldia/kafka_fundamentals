@@ -3,7 +3,7 @@ use rdkafka::producer::FutureRecord;
 use rdkafka::producer::future_producer::Delivery;
 use serde::Serialize;
 use shared::config::{AppConfig, PartitioningMode};
-use shared::create_producer;
+use shared::create_producer_props;
 use std::env;
 use std::io::{self, BufRead};
 use std::time::Duration;
@@ -26,7 +26,16 @@ async fn main() -> Result<()> {
     };
 
     let cfg = AppConfig::from_file(&cfg_path);
-    let producer = create_producer(&cfg.bootstrap_servers)?;
+
+    let timeout = cfg.message_timeout_ms.unwrap_or(5000).to_string();
+    let compression = cfg.compression.unwrap_or("lz4".to_string());
+    let props = &[
+        ("bootstrap.servers", cfg.bootstrap_servers),
+        ("compression.type", compression),
+        ("message.timeout.ms", timeout),
+    ];
+
+    let producer = create_producer_props(props)?;
 
     eprintln!(
         "Producer started with {:?} partitioning. Using config: {}",

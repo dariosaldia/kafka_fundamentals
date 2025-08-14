@@ -4,26 +4,26 @@ use rdkafka::{consumer::StreamConsumer, producer::FutureProducer};
 
 pub mod config;
 
-pub fn create_producer(bootstrap: &str) -> Result<FutureProducer> {
-    Ok(ClientConfig::new()
-        .set("bootstrap.servers", bootstrap)
-        .set("compression.type", "lz4")
-        .set("message.timeout.ms", "5000")
-        .create()?)
+pub fn create_producer_props<K, V>(props: &[(K, V)]) -> Result<FutureProducer>
+where
+    K: AsRef<str>,
+    V: AsRef<str>,
+{
+    let mut cfg = ClientConfig::new();
+    for (k, v) in props {
+        cfg.set(k.as_ref(), v.as_ref());
+    }
+    Ok(cfg.create()?)
 }
 
-pub fn create_consumer(
-    bootstrap: &str,
-    group_id: &str,
-    auto_commit: bool,
-) -> Result<StreamConsumer> {
-    Ok(ClientConfig::new()
-        .set("bootstrap.servers", bootstrap)
-        .set("group.id", group_id)
-        .set(
-            "enable.auto.commit",
-            if auto_commit { "true" } else { "false" },
-        )
-        .set("auto.offset.reset", "earliest")
-        .create()?)
+pub fn create_consumer_props<K, V>(props: &[(K, V)]) -> Result<StreamConsumer>
+where
+    K: AsRef<str>,
+    V: AsRef<str>,
+{
+    let mut cfg = ClientConfig::new();
+    for (k, v) in props {
+        cfg.set(k.as_ref(), v.as_ref());
+    }
+    Ok(cfg.create()?)
 }
