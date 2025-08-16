@@ -679,6 +679,7 @@ dependencies = [
  "config",
  "rdkafka",
  "serde",
+ "thiserror",
  "tokio",
  "toml",
 ]

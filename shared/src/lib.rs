@@ -4,8 +4,7 @@ use rdkafka::{consumer::StreamConsumer, producer::FutureProducer};
 
 pub mod config;
 pub mod event;
-
-// pub use event::Event;
+pub mod record;
 
 pub fn create_producer_props<K, V>(props: &[(K, V)]) -> Result<FutureProducer>
 where
