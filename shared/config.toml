@@ -1,0 +1,25 @@
+[common]
+bootstrap_servers = "localhost:9092"
+topic = "demo.events"
+compression = "lz4"
+message_timeout_ms = 5000
+auto_offset_reset = "earliest"
+
+# ---- Lab 1 ----
+
+[lab1.keyed]
+enable_auto_commit = true
+group_id = "lab1-consumer-group-keyed"
+partitioning = "keyed"
+
+[lab1.roundrobin]
+enable_auto_commit = true
+group_id = "lab1-consumer-group-rr"
+partitioning = "round_robin"
+
+# ---- Lab 2 ----
+
+[lab2.default]
+enable_auto_commit = false
+enable_auto_offset_store = false
+group_id = "lab2-consumer-group-default"

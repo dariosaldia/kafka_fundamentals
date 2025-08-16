@@ -9,3 +9,4 @@ rdkafka = "0.38.0"
 config = "0.15.13"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+toml = "0.9.5"

@@ -17,15 +17,27 @@ struct Event {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let mut args = env::args().skip_while(|a| a != "--config");
-    let cfg_path = match args.next() {
-        Some(_) => args
-            .next()
-            .unwrap_or_else(|| "labs/lab1_produce_consume/config_keyed.toml".into()),
-        None => "labs/lab1_produce_consume/config_keyed.toml".into(),
-    };
+    let mut args = env::args();
+    let mut cfg_path = "shared/config.toml".to_string();
+    let mut profile = "lab1.keyed".to_string();
 
-    let cfg = AppConfig::from_file(&cfg_path);
+    while let Some(a) = args.next() {
+        match a.as_str() {
+            "--config" => {
+                if let Some(p) = args.next() {
+                    cfg_path = p;
+                }
+            }
+            "--profile" => {
+                if let Some(p) = args.next() {
+                    profile = p;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let cfg = AppConfig::from_file(&cfg_path, &profile);
 
     let timeout = cfg.message_timeout_ms.unwrap_or(5000).to_string();
     let compression = cfg.compression.unwrap_or("lz4".to_string());

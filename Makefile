@@ -1,12 +1,9 @@
+# Default lab and group
 LAB ?= lab1_produce_consume
-CONFIG_DIR := labs/$(LAB)
-CONFIG_KEYED := $(CONFIG_DIR)/config_keyed.toml
-CONFIG_RR    := $(CONFIG_DIR)/config_roundrobin.toml
-COMPOSE = docker compose
-
-# Default groups (override with: make consumer-keyed GROUP=my-group)
+PROFILE ?= lab1.keyed
 GROUP ?= demo-consumer-group
-GROUP_RR ?= demo-consumer-group-rr
+CONFIG := shared/config.toml
+COMPOSE = docker compose
 
 up: down
 	$(COMPOSE) up -d
@@ -17,16 +14,14 @@ down:
 build:
 	cargo build
 
-# ----- Convenience runners for Lab 1 -----
+# ----- Generic runners with PROFILE=lab2.default, etc -----
 
-consumer-keyed:
-	cargo run -p $(LAB) --bin consumer -- --config $(CONFIG_KEYED) --group-id $(GROUP)
+consumer:
+	cargo run -p $(LAB) --bin consumer -- \
+		--profile $(PROFILE) \
+		$(if $(GROUP),--group-id $(GROUP),) \
+		$(if $(FAIL_MOD),--fail-mod $(FAIL_MOD),) \
+		$(if $(FAIL_ACTION),--fail-action $(FAIL_ACTION),)
 
-producer-keyed:
-	cargo run -p $(LAB) --bin producer -- --config $(CONFIG_KEYED)
-
-consumer-rr:
-	cargo run -p $(LAB) --bin consumer -- --config $(CONFIG_RR) --group-id $(GROUP_RR)
-
-producer-rr:
-	cargo run -p $(LAB) --bin producer -- --config $(CONFIG_RR)
+producer:
+	cargo run -p $(LAB) --bin producer -- --profile $(PROFILE)

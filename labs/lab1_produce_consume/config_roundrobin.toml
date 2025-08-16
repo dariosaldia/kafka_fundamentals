@@ -1,6 +1,0 @@
-bootstrap_servers = "localhost:9092"
-topic = "demo.events"
-group_id = "lab1-consumer-group-rr"
-compression = "lz4"
-message_timeout_ms = 5000
-partitioning = "round_robin"

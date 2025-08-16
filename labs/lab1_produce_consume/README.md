@@ -1,21 +1,10 @@
-# Lab 1 – Basic Kafka Producer/Consumer in Rust
+# Lab 1 - Exploring Kafka Partitioning in Rust
 
-## Overview
-This lab implements a Kafka producer and consumer in Rust using the `rdkafka` crate.  
-Configuration is loaded from a TOML file. Both producer and consumer can be pointed to different config files at runtime.
+This lab demonstrates how Kafka distributes messages across partitions and how partitioning strategies influence message ordering and parallelism. Using a Rust producer and consumer built with the rdkafka crate, it compares two common approaches:
+    - **Keyed partitioning**: Messages include a key, ensuring all messages with the same key are routed to the same partition, preserving their order.
+    - **Round-robin partitioning**: Messages have no key and are evenly distributed across partitions, maximizing throughput but without per-key ordering guarantees.
 
-Two partitioning modes are supported for the producer:
-- **Keyed**: Messages include a key, ensuring the same key always goes to the same partition.
-- **Round-robin**: Messages have no key and are distributed across partitions in round-robin order.
-
-
-## Project structure
-- **shared/** – Common helpers and config loading.
-- **labs/lab1_produce_consume/** – Producer and consumer binaries.
-- **docker-compose.yml** (root) – Local Kafka broker setup.
-- **Makefile** (root) – Commands to start/stop Kafka and create topics.
-- **config_keyed.toml** – Producer sends messages with keys (per-key partitioning).
-- **config_roundrobin.toml** – Producer sends messages without keys (round-robin partitioning).
+The lab is designed to provide a clear, hands-on view of how partitioning affects message flow in Kafka.
 
 ## Prerequisites
 - Docker & Docker Compose
@@ -30,48 +19,80 @@ make up
 ```bash
 make build
 ```
-## Running
+## 🧪 Running the lab
 ### 1. Keyed mode (per-key partitioning)
-```bash
-# Terminal A
-make consumer-keyed
 
-# Terminal B
-make producer-keyed
+In this mode, the producer attaches a **key** (here, `user_id`) to each message.  
+Kafka's default partitioner will always send messages with the same key to the **same partition**.  
+This preserves the order for that key.
+
+```bash
+# Terminal A: Run consumer
+make consumer
+
+# Terminal B: Run producer with keyed profile
+make producer
 ```
 
-Type messages in the producer:
+Enter messages in the producer terminal:
 ```bash
 u1 click 10
 u2 purchase 99
 u1 view 1
+```
+
+**What to look for:**
+- Messages from u1 will always go to the same partition (e.g., p0 or p1).
+- Messages from u2 will consistently go to a different partition.
+- In the consumer output, note that offsets are per partition. For example:
+
+```
+partition=2 @ offset=0 key=Some("u1") => Event {...}
+partition=0 @ offset=0 key=Some("u2") => Event {...}
+partition=2 @ offset=1 key=Some("u1") => Event {...}
 ```
 
 ### 2. Round-robin mode (no key)
-```bash
-# Terminal A
-make consumer-rr
 
-# Terminal B
-make producer-rr
+In this mode, the producer **does not send a key** with messages.
+Kafka’s default partitioner distributes them evenly across partitions in **round-robin** order.
+
+> **INFO**: You might want to run `make up` before proceeding to start fresh with Kafka
+
+```bash
+# Terminal A: Run consumer (same profile works regardless of keying)
+make consumer
+
+# Terminal B: Run producer with round-robin profile
+make producer PROFILE=lab1.roundrobin
 ```
 
-Type messages in the producer:
+Enter messages in the producer terminal:
 ```bash
 u1 click 10
 u2 purchase 99
 u1 view 1
 ```
 
-## Key takeaways
-1. **Keys determine partition assignment**
-    - Messages with the same key always go to the same partition (ensuring per-key ordering).
+**What to look for:**
+- Messages will be assigned to partitions in a rotating sequence:
+
+```
+partition=1 @ offset=0 key=None => Event {...}
+partition=2 @ offset=0 key=None => Event {...}
+partition=0 @ offset=0 key=None => Event {...}
+```
+
+Because there is no key, **ordering across messages for the same user_id is not guaranteed**.
+
+## 💡 Key takeaways
+
+1. **Keys determine partition assignment**  
+    - Messages with the same key always go to the same partition, preserving per-key ordering.  
     - Messages without a key are distributed round-robin across partitions.
-2. **Offsets are per partition**
-    - Offsets increment independently in each partition.
-    - They are not global sequence numbers for the whole topic.
-3. **Consumer group state is tied to group.id**
-    - Consumers in the same group share the work of reading partitions.
-    - Change the group.id and Kafka will treat you as a completely new group starting from the configured auto.offset.reset.
-4. **Producer send is asynchronous with delivery reports**
-    - The FutureProducer returns a delivery result later, indicating partition & offset on success, or the failed message and error on failure.
+2. **Offsets are per partition**  
+    - Each partition maintains its own offset sequence.  
+    - Offsets are not global for the entire topic.
+3. **Partition choice impacts ordering and parallelism**  
+    - Keyed partitioning preserves order but can limit parallelism for hot keys.  
+    - Round-robin partitioning maximizes throughput but does not guarantee ordering across messages without a key.  
