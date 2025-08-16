@@ -1,19 +1,12 @@
 use anyhow::Result;
 use rdkafka::producer::FutureRecord;
 use rdkafka::producer::future_producer::Delivery;
-use serde::Serialize;
 use shared::config::{AppConfig, PartitioningMode};
 use shared::create_producer_props;
+use shared::event::Event;
 use std::env;
 use std::io::{self, BufRead};
 use std::time::Duration;
-
-#[derive(Serialize)]
-struct Event {
-    user_id: String,
-    action: String,
-    value: i64,
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
