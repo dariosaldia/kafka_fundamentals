@@ -356,6 +356,14 @@ dependencies = [
 [[package]]
 name = "lab3_consumer_groups"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rdkafka",
+ "serde",
+ "serde_json",
+ "shared",
+ "tokio",
+]
 
 [[package]]
 name = "libc"

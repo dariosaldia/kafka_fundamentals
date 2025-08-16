@@ -23,3 +23,10 @@ partitioning = "round_robin"
 enable_auto_commit = false
 enable_auto_offset_store = false
 group_id = "lab2-consumer-group-default"
+
+# ---- Lab 3 ----
+
+[lab3.default]
+enable_auto_commit = true
+enable_auto_offset_store = true
+group_id = "lab3-consumer-group-default"
