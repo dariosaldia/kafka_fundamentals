@@ -342,6 +342,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "lab2_offsets_manual"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rdkafka",
+ "serde",
+ "serde_json",
+ "shared",
+ "tokio",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.175"
 source = "registry+https://github.com/rust-lang/crates.io-index"
