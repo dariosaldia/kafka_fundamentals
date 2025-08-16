@@ -1,3 +1,3 @@
 [workspace]
-members = ["shared", "labs/lab1_produce_consume", "labs/lab2_offsets_manual", "labs/lab3_consumer_groups"]
+members = ["shared", "labs/lab1_produce_consume", "labs/lab2_offsets_manual", "labs/lab3_consumer_groups", "labs/lab4_delivery_semantics"]
 resolver = "2"
