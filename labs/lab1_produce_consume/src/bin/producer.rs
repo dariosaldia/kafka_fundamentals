@@ -1,9 +1,9 @@
 use anyhow::Result;
-use rdkafka::producer::FutureRecord;
 use rdkafka::producer::future_producer::Delivery;
-use shared::config::{AppConfig, PartitioningMode};
+use shared::config::AppConfig;
 use shared::create_producer_props;
 use shared::event::Event;
+use shared::record::create_future_record;
 use std::env;
 use std::io::{self, BufRead};
 use std::time::Duration;
@@ -64,14 +64,8 @@ async fn main() -> Result<()> {
 
         let payload = serde_json::to_vec(&evt)?;
 
-        let record = match cfg.partitioning {
-            PartitioningMode::Keyed => FutureRecord::to(&cfg.topic)
-                .key(&evt.user_id)
-                .payload(&payload),
-            PartitioningMode::RoundRobin => {
-                FutureRecord::to(&cfg.topic).payload(&payload) // NO KEY
-            }
-        };
+        let record =
+            create_future_record(Some(&evt.user_id), &payload, &cfg.topic, cfg.partitioning)?;
 
         let delivery = producer.send(record, Duration::from_secs(0)).await;
 
