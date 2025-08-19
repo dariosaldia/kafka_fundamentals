@@ -74,5 +74,6 @@ Goal: **never process a message twice**, accepting that some messages might be *
 - Kafka commits or aborts atomically, ensuring no duplicates and no loss.
 - EOS is more advanced and requires careful configuration.
 
-## Further Reading
+## Further Learning
 - [Confluent Docs – Kafka Message Delivery Guarantees](https://docs.confluent.io/kafka/design/delivery-semantics.html#ak-message-delivery-guarantees)
+- [How Kafka Works](https://www.youtube.com/watch?v=jY02MB-sz8I)
