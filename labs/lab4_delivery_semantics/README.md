@@ -115,7 +115,7 @@ Exactly-once semantics are conceptually supported by Kafka through a combination
 - Writes messages and consumer offsets as part of the transaction.
 - Commits or aborts the transaction atomically.
 
-This lab sets up the configuration (`lab4.exactlyonce`) but does not fully implement EOS. A later lab will extend this.
+This lab sets up the configuration (`lab4.exactlyonce`) but does not fully implement EOS.
 
 ## 🧼 Behavior & Expected Output
 
