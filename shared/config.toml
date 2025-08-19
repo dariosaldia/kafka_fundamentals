@@ -30,3 +30,20 @@ group_id = "lab2-consumer-group-default"
 enable_auto_commit = true
 enable_auto_offset_store = true
 group_id = "lab3-consumer-group-default"
+
+# ---- Lab 4 ----
+
+[lab4.atmostonce]
+group_id = "lab4-atmostonce"
+enable_auto_commit = true
+enable_auto_offset_store = true
+
+[lab4.atleastonce]
+group_id = "lab4-atleastonce"
+enable_auto_commit = false
+enable_auto_offset_store = false
+
+[lab4.exactlyonce]
+group_id = "lab4-eos"
+enable_auto_commit = false
+enable_auto_offset_store = false
