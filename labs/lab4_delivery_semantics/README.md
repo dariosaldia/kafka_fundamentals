@@ -1,4 +1,6 @@
-# Lab 4 – Delivery Semantics in Kafka
+# Lab 4 – Delivery Semantics in Kafka 
+
+By default, Kafka provides **at-least-once** delivery semantics. This is because producers automatically retry sending messages on failure, and consumers commit offsets **after** processing messages. This combination ensures no messages are lost, but can lead to duplicates if failures occur between processing and committing offsets.
 
 This lab explores how **delivery semantics** (at-most-once, at-least-once, exactly-once) manifest in Kafka, and how they depend on **when offsets are committed** relative to message processing. It demonstrates how consumer logic and configuration affect whether messages are lost, duplicated, or delivered exactly once.
 
@@ -36,13 +38,15 @@ u3 view 3
 ```
 
 Restart the consumer without crashing and wait a few seconds. No activity should be displayed in the terminal.
+
 ```bash
 make l4-consumer-atmost-no-crashing
 ```
 
 **Expected behavior:**
 - Offsets are committed *before* processing.
-- If processing fails, the message is lost (not redelivered).
+- If processing fails, the message is lost (never retried).
+- When the consumer is restarted after a failure, lost messages will **not** reappear because their offsets were already committed.
 - Example:
 ```
 ✅ COMMIT (pre) p2 @ 0
@@ -77,7 +81,9 @@ u3 view 3
 
 **Expected behavior:**
 - Messages are processed first, then committed.
-- If processing fails, the message is retried on restart (duplicates possible).
+- If processing fails, the message is retried on restart.
+- Duplicates appear if the consumer crashes after processing a message but before committing its offset.
+- Reprocessed messages are duplicates because the offset commit lags behind processing.
 - Example:
 ```
 ✅ PROCESSED (post) p2 @ 0 key=Some("u1") => Event { user_id: "u1", action: "click", value: 1 }
@@ -90,6 +96,7 @@ u3 view 3
 ```
 
 Restart the consumer without crashing and wait until the failed message gets reprocessed
+
 ```bash
 make l4-consumer-atleast-no-crashing
 ```
@@ -103,7 +110,7 @@ Duplicates occur because offset commit lags behind processing.
 
 ### 3. Exactly-once delivery (conceptual)
 
-Exactly-once semantics require **idempotent producers** and **transactions**:
+Exactly-once semantics are conceptually supported by Kafka through a combination of **idempotent producers** and **transactions**:
 - The producer starts a transaction.
 - Writes messages and consumer offsets as part of the transaction.
 - Commits or aborts the transaction atomically.
@@ -114,18 +121,20 @@ This lab sets up the configuration (`lab4.exactlyonce`) but does not fully imple
 
 | Mode            | Commit timing | Failure effect                          | Crash effect                         |
 |-----------------|---------------|-----------------------------------------|---------------------------------------|
-| At-most-once    | Before        | Message lost (never retried)            | Already committed, so skipped         |
-| At-least-once   | After         | Message retried → possible duplicates   | Uncommitted messages replayed         |
-| Exactly-once    | Transactional | No loss, no duplicates (with EOS)       | Atomic commit/abort ensures consistency |
+| At-most-once    | Before        | **Message lost** (never retried)            | Already committed, so skipped         |
+| At-least-once   | After         | **Message retried → duplicates possible**   | Uncommitted messages replayed         |
+| Exactly-once    | Transactional | **No loss, no duplicates** (with EOS)       | Atomic commit/abort ensures consistency |
 
 ## 💡 Key Takeaways
 
-- **Kafka defaults to at-least-once delivery.**
-  - Because offsets are committed *after* processing by default.
-  - Guarantees no message loss, but duplicates may occur.
-- **At-most-once** is possible by committing offsets *before* processing.
-  - Simpler, but risks data loss.
-- **Exactly-once semantics** (EOS) require idempotent producers and transactions.
-  - Kafka ensures this by atomically committing both writes and offset progress.
-- Delivery semantics are not hard-coded in Kafka; they depend on **consumer commit logic**.
+- **Kafka defaults to at-least-once delivery.**  
+  - Producer retries ensure messages are sent, and consumers commit offsets after processing.  
+  - This guarantees no message loss but allows duplicates.
 
+- **At-most-once is possible by committing offsets before processing.**  
+  - Simpler but risks losing messages if processing fails.
+
+- **Exactly-once semantics require idempotent producers and transactions.**  
+  - Kafka atomically commits both writes and offset progress to avoid duplicates and loss.
+
+- Delivery semantics depend on **consumer commit logic** and producer guarantees, not Kafka itself.
